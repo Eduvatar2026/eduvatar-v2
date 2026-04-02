@@ -1,0 +1,190 @@
+'use client';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronDown, Sparkles } from 'lucide-react';
+import { t } from '@/lib/translations';
+
+export const AVATARS = [
+  {
+    id: 'ibn_sina',
+    name: 'Ibn Sina',
+    displayName: 'Ibn Sina (Avicenna)',
+    subjects: ['Science', 'Biology', 'Medicine'],
+    greetingKey: 'greetingIbnSina',
+    gender: 'male',   // ─── FIX #1: Added gender for voice locking ───
+    colors: { primary: '#1B6B4A', secondary: '#D4AF37', glow: '#2E8B57', bg: '#F0F7F4' },
+    image: '/avatars/ibn_sina.png',
+  },
+  {
+    id: 'einstein',
+    name: 'Einstein',
+    displayName: 'Albert Einstein',
+    subjects: ['Physics', 'Mathematics', 'Space'],
+    greetingKey: 'greetingEinstein',
+    gender: 'male',   // ─── FIX #1: Added gender for voice locking ───
+    colors: { primary: '#37474F', secondary: '#FFC107', glow: '#546E7A', bg: '#F5F5F5' },
+    image: '/avatars/einstein.png',
+  },
+];
+
+function AvatarPortrait({ avatar, state, size = 'large' }) {
+  // ─── FIX #4: Made avatar sizes bigger ───
+  const sizeClass = size === 'large' ? 'w-40 h-40' : size === 'medium' ? 'w-12 h-12' : 'w-6 h-6';
+  const [imgError, setImgError] = useState(false);
+
+  const fallbackInitials = (
+    <div className={`${sizeClass} rounded-full flex items-center justify-center text-white font-bold`}
+      style={{ backgroundColor: avatar.colors.primary, fontSize: size === 'large' ? '2.5rem' : size === 'medium' ? '1rem' : '0.5rem' }}>
+      {avatar.name.split(' ').map(w => w[0]).join('')}
+    </div>
+  );
+
+  if (imgError) return fallbackInitials;
+
+  return (
+    <div className={`${sizeClass} rounded-full overflow-hidden bg-gray-100 relative`}>
+      <img
+        src={avatar.image}
+        alt={avatar.displayName}
+        className="w-full h-full object-cover"
+        onError={() => setImgError(true)}
+      />
+      {/* ─── FIX #6: Improved speaking mouth overlay — larger, more visible ─── */}
+      {state === 'speaking' && (
+        <div className="absolute bottom-[15%] left-1/2 -translate-x-1/2 w-[35%] h-[14%] rounded-[50%] bg-black/30 backdrop-blur-[2px]"
+          style={{ animation: 'mouthMove 0.4s ease-in-out infinite alternate' }} />
+      )}
+      {/* ─── FIX #6: Listening indicator — pulsing ear glow ─── */}
+      {state === 'listening' && (
+        <div className="absolute inset-0 rounded-full border-4 border-blue-400 animate-pulse opacity-60" />
+      )}
+      {/* ─── FIX #6: Thinking indicator — subtle shimmer overlay ─── */}
+      {state === 'thinking' && (
+        <div className="absolute inset-0 rounded-full overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function AvatarDisplay({ state = 'idle', avatar, language = 'en' }) {
+  if (!avatar) return null;
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      {/* ─── FIX #4: Made the whole avatar container bigger (10rem = 160px) ─── */}
+      <div className={`relative transition-all duration-500 ease-out ${state === 'speaking' ? 'scale-105' : ''}`}>
+        <div className="relative">
+          {/* Spinning ring layer — bigger */}
+          <div className={`absolute inset-0 rounded-full transition-all duration-300 ${
+            state === 'speaking' ? 'bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-400 animate-spin-slow' :
+            state === 'listening' ? 'bg-gradient-to-r from-blue-400 via-blue-500 to-blue-400 animate-pulse' :
+            state === 'thinking' ? 'bg-gradient-to-r from-amber-300 via-amber-400 to-amber-300 animate-pulse' :
+            'bg-gray-200'
+          }`} style={{ padding: '4px', width: '10.5rem', height: '10.5rem' }}>
+            <div className="w-full h-full rounded-full bg-white" />
+          </div>
+
+          {/* Portrait layer */}
+          <div className="relative z-10 p-[4px]" style={{ width: '10.5rem', height: '10.5rem' }}>
+            <div className="w-full h-full rounded-full overflow-hidden bg-white shadow-md">
+              <AvatarPortrait avatar={avatar} state={state} size="large" />
+            </div>
+          </div>
+        </div>
+
+        {/* ─── FIX #6: Bigger, better glow effect ─── */}
+        {state !== 'idle' && (
+          <div className={`absolute inset-0 rounded-full -z-10 blur-2xl transition-all duration-500 ${
+            state === 'speaking' ? 'bg-emerald-400 scale-130 opacity-50' :
+            state === 'listening' ? 'bg-blue-400 scale-115 opacity-40' :
+            state === 'thinking' ? 'bg-amber-400 scale-115 opacity-40' : ''
+          }`} style={{ width: '10.5rem', height: '10.5rem' }} />
+        )}
+
+        {/* ─── FIX #6: Translated state indicator with emoji ─── */}
+        <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full border-2 border-white text-[10px] font-semibold z-20 flex items-center gap-1 ${
+          state === 'speaking' ? 'bg-green-500 text-white' :
+          state === 'listening' ? 'bg-blue-500 text-white animate-pulse' :
+          state === 'thinking' ? 'bg-amber-500 text-white animate-pulse' :
+          'bg-gray-200 text-gray-600'
+        }`}>
+          {state === 'speaking' && <><span className="inline-block animate-bounce">🔊</span> {t('stateSpeaking', language)}</>}
+          {state === 'listening' && <><span className="inline-block animate-pulse">🎤</span> {t('stateListening', language)}</>}
+          {state === 'thinking' && <><span className="inline-block animate-spin-slow">💭</span> {t('stateThinking', language)}</>}
+          {state === 'idle' && <><span>✨</span> {t('stateReady', language)}</>}
+        </div>
+      </div>
+
+      {/* Name */}
+      <div className="text-center mt-2">
+        <p className="text-sm font-semibold text-[var(--color-text)]">{avatar.displayName}</p>
+        <p className="text-[11px] text-[var(--color-text-muted)]">{avatar.subjects.join(' · ')}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ─── FIX #5: AvatarSelector now has TWO modes:
+     - compact=true  → small dropdown for the header (kept for backwards compat)
+     - compact=false → card selector shown UNDER the avatar ─── */
+export function AvatarSelector({ selectedAvatar, onSelect, compact = false, language = 'en' }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  if (compact) {
+    // ─── FIX #5: Compact dropdown — positioned BELOW the avatar area ───
+    return (
+      <div ref={ref} className="relative inline-block">
+        <button onClick={() => setOpen(!open)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs bg-[var(--color-surface-raised)] hover:bg-gray-100 transition-colors border border-[var(--color-border)]">
+          <AvatarPortrait avatar={selectedAvatar} state="idle" size="tiny" />
+          <span className="text-[var(--color-text)] font-medium">{selectedAvatar?.name || t('chooseTutor', language)}</span>
+          <ChevronDown size={12} className={`transition-transform text-[var(--color-text-muted)] ${open ? 'rotate-180' : ''}`} />
+        </button>
+        {open && (
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white border border-[var(--color-border)] rounded-xl shadow-xl py-2 min-w-[260px] z-30">
+            <p className="px-4 py-1.5 text-[10px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+              {t('chooseTutor', language)}
+            </p>
+            {AVATARS.map(av => (
+              <button key={av.id} onClick={() => { onSelect(av); setOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--color-surface-raised)] transition-colors ${selectedAvatar?.id === av.id ? 'bg-brand-50' : ''}`}>
+                <AvatarPortrait avatar={av} state="idle" size="medium" />
+                <div className="text-left">
+                  <p className="text-sm font-medium">{av.displayName}</p>
+                  <p className="text-[10px] text-[var(--color-text-muted)]">{av.subjects.join(', ')}</p>
+                </div>
+                {selectedAvatar?.id === av.id && <Sparkles size={14} className="text-brand-500 ml-auto" />}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Full card selector (for initial selection screen)
+  return (
+    <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+      {AVATARS.map(av => (
+        <button key={av.id} onClick={() => onSelect(av)}
+          className={`p-5 rounded-2xl border-2 transition-all duration-300 hover:shadow-lg ${selectedAvatar?.id === av.id ? 'border-brand-400 bg-brand-50 shadow-md scale-[1.02]' : 'border-[var(--color-border)] bg-white hover:border-brand-200'}`}>
+          <div className="w-24 h-24 mx-auto mb-3">
+            <AvatarPortrait avatar={av} state="idle" size="large" />
+          </div>
+          <p className="font-medium text-sm">{av.displayName}</p>
+          <p className="text-[10px] text-[var(--color-text-muted)] mt-1">{av.subjects.join(', ')}</p>
+        </button>
+      ))}
+    </div>
+  );
+}

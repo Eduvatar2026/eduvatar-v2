@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --font-display: 'DM Serif Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  --color-bg: #faf9f7;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f5f3ef;
+  --color-text: #1a1a1a;
+  --color-text-muted: #6b6b6b;
+  --color-border: #e5e2dc;
+  --color-accent: #0c8de9;
+  --color-accent-warm: #db8628;
+  --color-success: #5a7a57;
+  --color-danger: #c44040;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* PDF Viewer overrides */
+.react-pdf__Page__canvas {
+  margin: 0 auto;
+  border-radius: 4px;
+}
+
+/* Chat message animation */
+@keyframes messageSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.chat-message {
+  animation: messageSlide 0.3s ease-out;
+}
+
+/* Quiz option hover */
+.quiz-option {
+  transition: all 0.2s ease;
+}
+.quiz-option:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+/* Badge shine effect */
+@keyframes badgeShine {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.badge-earned {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: badgeShine 3s ease-in-out infinite;
+}
+
+/* RTL support for Arabic */
+[dir="rtl"] .chat-message {
+  direction: rtl;
+  text-align: right;
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+@keyframes mouthMove {
+  0% { transform: translateX(-50%) scaleY(0.6); }
+  100% { transform: translateX(-50%) scaleY(1.4); }
+}
+
+/* Avatar shimmer effect for thinking state */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.animate-shimmer {
+  animation: shimmer 1.5s ease-in-out infinite;
+}
