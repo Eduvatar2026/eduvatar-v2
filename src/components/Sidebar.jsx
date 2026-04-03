@@ -4,12 +4,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { t, RTL_LANGUAGES } from '@/lib/translations';
 import {
   LayoutDashboard, MessageCircle, BookOpen, ClipboardCheck,
-  Trophy, ChevronLeft, ChevronRight, Globe, LogOut
+  Trophy, ChevronLeft, ChevronRight, Globe, LogOut, GraduationCap
 } from 'lucide-react';
 import { useState } from 'react';
 
 const NAV_ITEMS = [
   { id: 'dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
+  { id: 'curriculum', labelKey: 'curriculum', icon: GraduationCap },
   { id: 'chat', labelKey: 'askAiTutor', icon: MessageCircle },
   { id: 'library', labelKey: 'textbookLibrary', icon: BookOpen },
   { id: 'quiz', labelKey: 'quizzes', icon: ClipboardCheck },

@@ -7,6 +7,7 @@ import {
   saveQuizResult,
   loadRecentQuizResults,
 } from '@/lib/supabase';
+import { updateMasteryAfterQuiz, loadMasteryBySubject, detectWeakAreas } from '@/lib/mastery';
 import { RTL_LANGUAGES } from '@/lib/translations';
 
 const AppContext = createContext(null);
@@ -80,6 +81,8 @@ export function AppProvider({ children, userId }) {
   const [notification, setNotification] = useState(null);
   const [chatMessages, setChatMessages] = useState(INITIAL_CHAT);
   const [questionsAsked, setQuestionsAsked] = useState(0);
+  const [masteryBySubject, setMasteryBySubject] = useState({});
+  const [weakAreas, setWeakAreas] = useState([]);
 
   // ─── Phase 1: Hydrate on mount ─────────────────────────────────────────────
   // Load from localStorage first (instant), then sync/override with Supabase.
@@ -119,6 +122,17 @@ export function AppProvider({ children, userId }) {
           // Merge quiz scores: Supabase is the source of truth; fall back to local cache
           quizScores: quizResults.length > 0 ? quizResults : prev.quizScores,
         }));
+      }
+
+      // Load mastery data + weak areas
+      const grade = profile?.grade || savedStudent?.grade;
+      if (grade) {
+        const [mastery, weak] = await Promise.all([
+          loadMasteryBySubject(userId, grade),
+          detectWeakAreas(userId),
+        ]);
+        setMasteryBySubject(mastery);
+        setWeakAreas(weak);
       }
 
       setHydrated(true);
@@ -224,8 +238,16 @@ export function AppProvider({ children, userId }) {
     // Persist to Supabase quiz_results table (non-blocking)
     if (userId) {
       saveQuizResult(userId, { topic, difficulty, score, totalQuestions, percent }).catch(() => {});
+      // Update mastery tracking (non-blocking)
+      const grade = student.grade;
+      if (topic && grade) {
+        updateMasteryAfterQuiz(userId, topic, percent, grade)
+          .then(() => Promise.all([loadMasteryBySubject(userId, grade), detectWeakAreas(userId)]))
+          .then(([mastery, weak]) => { setMasteryBySubject(mastery); setWeakAreas(weak); })
+          .catch(() => {});
+      }
     }
-  }, [userId]);
+  }, [userId, student.grade]);
 
   const value = {
     student, setStudent,
@@ -238,6 +260,7 @@ export function AppProvider({ children, userId }) {
     BADGES,
     chatMessages, setChatMessages,
     questionsAsked, setQuestionsAsked,
+    masteryBySubject, weakAreas,
     hydrated,
     userId,
   };

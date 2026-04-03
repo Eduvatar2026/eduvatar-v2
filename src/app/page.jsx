@@ -8,16 +8,20 @@ import ChatBot from '@/components/ChatBot';
 import TextbookLibrary from '@/components/TextbookLibrary';
 import QuizSystem from '@/components/QuizSystem';
 import Achievements from '@/components/Achievements';
+import CurriculumBrowser from '@/components/CurriculumBrowser';
 import Notification from '@/components/Notification';
 import LoginPage from '@/components/auth/LoginPage';
 import SignupPage from '@/components/auth/SignupPage';
+import TeacherDashboard from '@/components/teacher/TeacherDashboard';
+import AdminPanel from '@/components/admin/AdminPanel';
 
-// ─── App Shell (only rendered when authenticated) ────────────────────────────
-function AppContent() {
+// ─── Student App Shell ──────────────────────────────────────────────────────
+function StudentApp() {
   const { currentView } = useApp();
 
   const viewComponents = {
     dashboard:    Dashboard,
+    curriculum:   CurriculumBrowser,
     chat:         ChatBot,
     library:      TextbookLibrary,
     quiz:         QuizSystem,
@@ -37,11 +41,12 @@ function AppContent() {
   );
 }
 
-// ─── Auth Gate: decides what to render based on auth state ───────────────────
+// ─── Auth Gate: routes by role ──────────────────────────────────────────────
 function AuthGate() {
-  const { user, loading } = useAuth();
+  const { user, role, loading } = useAuth();
   const [authMode, setAuthMode] = useState('login');
 
+  // Loading spinner
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[var(--color-bg)]">
@@ -55,6 +60,7 @@ function AuthGate() {
     );
   }
 
+  // Not logged in → show auth screens
   if (!user) {
     if (authMode === 'signup') {
       return <SignupPage onSwitchToLogin={() => setAuthMode('login')} />;
@@ -62,11 +68,19 @@ function AuthGate() {
     return <LoginPage onSwitchToSignup={() => setAuthMode('signup')} />;
   }
 
-  // User is authenticated — mount AppProvider with their userId so all data
-  // is scoped to this student. Unmounts on logout, clearing in-memory state.
+  // ── Role-based routing ────────────────────────────────────────────────────
+  if (role === 'teacher') {
+    return <TeacherDashboard />;
+  }
+
+  if (role === 'admin') {
+    return <AdminPanel />;
+  }
+
+  // Default: student
   return (
     <AppProvider userId={user.id}>
-      <AppContent />
+      <StudentApp />
     </AppProvider>
   );
 }
